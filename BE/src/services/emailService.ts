@@ -27,6 +27,16 @@ const templates = {
       <p>${variables.message}</p>
     `,
   }),
+  'follow-up': (variables: Record<string, string>) => ({
+    subject: `Follow-up regarding your inquiry - ${variables.company}`,
+    html: `
+      <h2>Thank you for your interest!</h2>
+      <p>Dear ${variables.name},</p>
+      <p>Thank you for reaching out to us regarding your project. We appreciate your interest in our services.</p>
+      <p>We have received your inquiry and will review it shortly. Our team will get back to you with more information about how we can help with your project.</p>
+      <p>Best regards,<br>Our Team</p>
+    `,
+  }),
 };
 
 export const sendEmail = async (
