@@ -1,7 +1,8 @@
-import express from 'express';
-import { PrismaClient } from '@prisma/client';
+import express, { Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
+import { PrismaClient } from '@prisma/client';
 import { auth, adminAuth } from '../middleware/auth';
+import { analyzeLead } from '../services/aiService';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const router = express.Router();
@@ -24,7 +25,7 @@ const leadValidation = [
 ];
 
 // Create lead (public endpoint)
-router.post('/', leadValidation, async (req, res) => {
+router.post('/', leadValidation, async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -106,36 +107,72 @@ router.post('/', leadValidation, async (req, res) => {
 });
 
 // Get all leads (admin only)
-router.get('/', auth, adminAuth, async (req, res) => {
+router.get('/', auth, async (req: Request, res: Response) => {
   try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+    const status = req.query.status as string;
+    const search = req.query.search as string;
+
+    // Build the where clause
+    const where: any = {};
+    if (status) {
+      where.status = status.toUpperCase();
+    }
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+        { company: { contains: search, mode: 'insensitive' } },
+        { projectTitle: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+
+    // Get total count for pagination
+    const total = await prisma.lead.count({ where });
+
+    // Get paginated leads
     const leads = await prisma.lead.findMany({
+      where,
       include: {
-        files: true
+        files: true,
+        aiInsights: true
       },
       orderBy: {
         createdAt: 'desc'
-      }
+      },
+      skip,
+      take: limit
     });
 
     res.json({
       success: true,
-      data: leads
+      data: leads,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
     });
   } catch (error) {
+    console.error('Error fetching leads:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error'
+      error: 'Failed to fetch leads'
     });
   }
 });
 
 // Get lead by ID (admin only)
-router.get('/:id', auth, adminAuth, async (req, res) => {
+router.get('/:id', auth, adminAuth, async (req: Request, res: Response) => {
   try {
     const lead = await prisma.lead.findUnique({
       where: { id: req.params.id },
       include: {
-        files: true
+        files: true,
+        aiInsights: true
       }
     });
 
@@ -159,7 +196,7 @@ router.get('/:id', auth, adminAuth, async (req, res) => {
 });
 
 // Update lead status (admin only)
-router.patch('/:id/status', auth, adminAuth, async (req, res) => {
+router.patch('/:id/status', auth, adminAuth, async (req: Request, res: Response) => {
   try {
     const { status } = req.body;
 
@@ -188,7 +225,7 @@ router.patch('/:id/status', auth, adminAuth, async (req, res) => {
 });
 
 // Delete lead (admin only)
-router.delete('/:id', auth, adminAuth, async (req, res) => {
+router.delete('/:id', auth, adminAuth, async (req: Request, res: Response) => {
   try {
     await prisma.lead.delete({
       where: { id: req.params.id }

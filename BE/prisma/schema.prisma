@@ -41,6 +41,7 @@ model Lead {
   status            LeadStatus @default(NEW)
   aiScore           Float    @default(0)
   aiAnalysis        String?  // Store the full AI analysis
+  aiInsights        AIInsights?
   files             File[]
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -53,6 +54,29 @@ model File {
   leadId    String
   lead      Lead     @relation(fields: [leadId], references: [id])
   createdAt DateTime @default(now())
+}
+
+model AIInsights {
+  id                String   @id @default(uuid())
+  leadId            String   @unique
+  lead              Lead     @relation(fields: [leadId], references: [id])
+  budget            String   // "good" or "needs_attention"
+  budgetReason      String
+  timeline          String   // "good" or "needs_attention"
+  timelineReason    String
+  scope             String   // "good" or "needs_attention"
+  scopeReason       String
+  requirements      String   // "good" or "needs_attention"
+  requirementsReason String
+  marketFit         String   // "high", "medium", or "low"
+  marketFitReason   String
+  technicalFeasibility String // "high", "medium", or "low"
+  technicalFeasibilityReason String
+  recommendation    String
+  nextSteps         String[]
+  riskFactors       String[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 enum Role {
