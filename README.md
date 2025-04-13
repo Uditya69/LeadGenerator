@@ -28,14 +28,14 @@ Lead Generator is a modern web application that helps businesses capture, analyz
 - TypeScript for type safety
 - Prisma as the ORM
 - PostgreSQL database
-- OpenAI integration for AI analysis
+- Gemini integration for AI analysis
 - Email service integration
 
 ## Prerequisites
 
 - Node.js (v18 or higher)
 - PostgreSQL
-- OpenAI API key
+- Gemini API key
 - SMTP server credentials (for email functionality)
 
 ## Setup Instructions
@@ -56,7 +56,7 @@ Lead Generator is a modern web application that helps businesses capture, analyz
    ```
    DATABASE_URL="postgresql://user:password@localhost:5432/leadgenerator"
    JWT_SECRET="your-secret-key"
-   OPENAI_API_KEY="your-openai-api-key"
+   GEMINI_API_KEY="your-gemini-api-key"
    SMTP_HOST="your-smtp-host"
    SMTP_PORT=587
    SMTP_USER="your-smtp-user"
